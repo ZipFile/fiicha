@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools >= 40.9.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.isort]
+profile = "black"
+
+[tool.pylint.format]
+max-line-length = "88"
+
+[tool.pylint.messages_control]
+disable = "C0330, C0326"
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts = "--cov=fiicha"
+
+[tool.mypy]
+warn_unused_configs = true
+warn_unused_ignores = true
