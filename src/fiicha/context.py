@@ -13,7 +13,7 @@ class FeatureFlagsContext(ContextDecorator, Generic[FeatureFlags_T]):
     """
 
     __slots__ = ("tokens", "var")
-    tokens: List[Token[FeatureFlags_T]]
+    tokens: List["Token[FeatureFlags_T]"]
     var: ContextVar[FeatureFlags_T]
 
     def __init__(self, var: ContextVar[FeatureFlags_T]) -> None:
@@ -23,7 +23,7 @@ class FeatureFlagsContext(ContextDecorator, Generic[FeatureFlags_T]):
     def __enter__(self) -> FeatureFlags_T:
         """Set copy of the feature flags as the new context variable."""
 
-        feature_flags = self.current._copy()
+        feature_flags = self.var.get()._copy()
 
         self.tokens.append(self.var.set(feature_flags))
 
