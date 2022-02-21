@@ -15,11 +15,11 @@ class FeatureFlag:
     """A descriptor object to mark attribute as a feature flag.
 
     Args:
-        desciption: Human-readable description of the feature flag.
+        description: Human-readable description of the feature flag.
     """
 
     def __init__(self, description: str = "") -> None:
-        self.desciption = description
+        self.description = description
 
     def __set_name__(self, owner: Any, name: str) -> None:
         self.name = name

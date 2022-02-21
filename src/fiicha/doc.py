@@ -25,7 +25,7 @@ def make_napoleon_doc(feature_flags: Mapping[str, FeatureFlag]) -> str:
     ]
 
     for name, feature_flag in sorted(feature_flags.items(), key=by_item_name):
-        out.append(f"    {name}: {feature_flag.desciption}")
+        out.append(f"    {name}: {feature_flag.description}")
 
     out.append("")
 
@@ -44,7 +44,7 @@ def make_sphinx_doc(feature_flags: Mapping[str, FeatureFlag]) -> str:
     ]
 
     for name, feature_flag in sorted(feature_flags.items(), key=by_item_name):
-        out.append(f":param {name}: {feature_flag.desciption}")
+        out.append(f":param {name}: {feature_flag.description}")
 
     out.append("")
 
