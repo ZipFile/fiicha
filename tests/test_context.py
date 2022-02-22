@@ -9,15 +9,16 @@ def test_ctx() -> None:
         test = FeatureFlag("Enable test feature.")
         tset = FeatureFlag("Erutaef tset elbane.")
 
-    root = TestFeatureFlags()
+    root = TestFeatureFlags(immutable=True)
     var: ContextVar[TestFeatureFlags] = ContextVar("test", default=root)
-    ff_ctx = FeatureFlagsContext(var)
+    ff_ctx = FeatureFlagsContext(var, immutable=False)
 
     assert root is ff_ctx.current
 
     with ff_ctx as first:
         assert first is not root
         assert first is ff_ctx.current
+        assert not first._immutable
 
         first.test = True
 
@@ -27,6 +28,7 @@ def test_ctx() -> None:
             assert second is not root
             assert second is not first
             assert second is ff_ctx.current
+            assert not second._immutable
 
             second.tset = True
 

@@ -1,5 +1,7 @@
 from copy import copy
-from typing import Mapping, get_type_hints
+from typing import Mapping, Tuple, get_type_hints
+
+from pytest import mark, raises
 
 from fiicha.core import FeatureFlag, FeatureFlags
 
@@ -15,7 +17,12 @@ def test_ok() -> None:
 
     assert TestFeatureFlags.__doc__ == "test tset"
     assert TestFeatureFlags.__slots__ == ("test", "tset")
-    assert get_type_hints(TestFeatureFlags) == {"test": bool, "tset": bool}
+    assert get_type_hints(TestFeatureFlags) == {
+        "__slots__": Tuple[str, ...],
+        "_immutable": bool,
+        "test": bool,
+        "tset": bool,
+    }
 
     ff = TestFeatureFlags({"test": True})
 
@@ -35,6 +42,39 @@ def test_ok_all() -> None:
     assert ff.tset
 
 
+def test_immutable() -> None:
+    class TestFeatureFlags(FeatureFlags):
+        test = FeatureFlag("Enable test feature.")
+
+    ff = TestFeatureFlags(immutable=True)
+
+    with raises(RuntimeError, match="this instance is immutable"):
+        ff.test = True
+
+
+def test_freeze() -> None:
+    class TestFeatureFlags(FeatureFlags):
+        test = FeatureFlag("Enable test feature.")
+
+    ff = TestFeatureFlags()
+    ff.test = True
+
+    ff._freeze()
+
+    with raises(RuntimeError):
+        ff.test = False
+
+
+def test_delattr() -> None:
+    class TestFeatureFlags(FeatureFlags):
+        test = FeatureFlag("Enable test feature.")
+
+    ff = TestFeatureFlags()
+
+    with raises(TypeError, match="feature flags are not deletable"):
+        del ff.test
+
+
 def test_subclassing() -> None:
     class Test1FeatureFlags(FeatureFlags):
         __slots__ = ("x",)
@@ -44,7 +84,13 @@ def test_subclassing() -> None:
     class Test2FeatureFlags(Test1FeatureFlags):
         tset = FeatureFlag("Erutaef tset elbane.")
 
-    assert get_type_hints(Test2FeatureFlags) == {"test": bool, "tset": bool, "x": int}
+    assert get_type_hints(Test2FeatureFlags) == {
+        "__slots__": Tuple[str, ...],
+        "_immutable": bool,
+        "test": bool,
+        "tset": bool,
+        "x": int,
+    }
 
     ff = Test2FeatureFlags({"test": True})
 
@@ -114,6 +160,15 @@ def test_copy_override() -> None:
     assert not ff_b.tset
 
 
+def test_copy_immutable() -> None:
+    class TestFeatureFlags(FeatureFlags):
+        test = FeatureFlag("Enable test feature.")
+
+    ff_a = TestFeatureFlags(immutable=True)
+    ff_b = ff_a._copy(immutable=False)
+    ff_b.test = True
+
+
 def test_merge() -> None:
     class TestFeatureFlags(FeatureFlags):
         test = FeatureFlag("Enable test feature.")
@@ -129,15 +184,20 @@ def test_merge() -> None:
     assert ff_c.tset
 
 
-def test_merge_in_place() -> None:
+@mark.parametrize("immutable", [False, True], ids=["normal", "immutable"])
+def test_merge_in_place(immutable: bool) -> None:
     class TestFeatureFlags(FeatureFlags):
         test = FeatureFlag("Enable test feature.")
         tset = FeatureFlag("Erutaef tset elbane.")
 
-    ff_a = ff = TestFeatureFlags({"test": True})
+    ff_a = ff = TestFeatureFlags({"test": True}, immutable=immutable)
     ff_b = TestFeatureFlags({"tset": True})
     ff_a |= ff_b
 
-    assert ff_a is ff
+    if immutable:
+        assert ff_a is not ff
+    else:
+        assert ff_a is ff
+
     assert ff_a.test
     assert ff_a.tset

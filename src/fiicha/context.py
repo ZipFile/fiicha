@@ -1,6 +1,6 @@
 from contextlib import ContextDecorator
 from contextvars import ContextVar, Token
-from typing import Any, Generic, List
+from typing import Any, Generic, List, Optional
 
 from .core import FeatureFlags_T
 
@@ -10,20 +10,26 @@ class FeatureFlagsContext(ContextDecorator, Generic[FeatureFlags_T]):
 
     Args:
         var: Context variable with default flags set.
+        immutable: Defines value of the immutable flag when copying feature
+            flags. When unset, preserves existing value.
     """
 
-    __slots__ = ("tokens", "var")
+    __slots__ = ("tokens", "var", "immutable")
     tokens: List["Token[FeatureFlags_T]"]
     var: ContextVar[FeatureFlags_T]
+    immutable: Optional[bool]
 
-    def __init__(self, var: ContextVar[FeatureFlags_T]) -> None:
+    def __init__(
+        self, var: ContextVar[FeatureFlags_T], immutable: Optional[bool] = None
+    ) -> None:
         self.tokens = []
         self.var = var
+        self.immutable = immutable
 
     def __enter__(self) -> FeatureFlags_T:
         """Set copy of the feature flags as the new context variable."""
 
-        feature_flags = self.var.get()._copy()
+        feature_flags = self.var.get()._copy(immutable=self.immutable)
 
         self.tokens.append(self.var.set(feature_flags))
 
